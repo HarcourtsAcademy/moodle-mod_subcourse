@@ -333,7 +333,7 @@ function subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly = 
     $return->grades = array();
 
     $refgradeitem = grade_item::fetch_course_item($refcourseid);
-
+    
     // get grade_item info
     foreach ($fetchedfields as $property) {
         if (!empty($refgradeitem->$property)) {
@@ -342,7 +342,7 @@ function subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly = 
             $return->$property = null;
         }
     }
-
+    
     // if the remote grade_item is non-global scale, do not fetch grades - they can't be used
     if (($refgradeitem->gradetype == GRADE_TYPE_SCALE) && (!subcourse_is_global_scale($refgradeitem->scaleid))) {
         $gradeitemonly = true;
@@ -397,7 +397,7 @@ function subcourse_grades_update($courseid, $subcourseid, $refcourseid, $itemnam
     $fetchedfields = subcourse_get_fetched_item_fields();
 
     $refgrades = subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly);
-
+    
     if (!empty($refgrades->localremotescale)) {
         // unable to fetch remote grades - local scale is used in the remote course
         return GRADE_UPDATE_FAILED;
@@ -420,7 +420,7 @@ function subcourse_grades_update($courseid, $subcourseid, $refcourseid, $itemnam
         $params['reset'] = true;
         $grades = null;
     }
-
+    
     return grade_update('mod/subcourse', $courseid, 'mod', 'subcourse', $subcourseid,
                         0, $grades, $params);
 }
@@ -486,10 +486,11 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
  * @param cm_info $cm
  * @return void
  */
-function mod_subcourse_cm_info_view(cm_info $cm) {
+/*function mod_subcourse_cm_info_view(cm_info $cm) {
     global $USER;
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
+    error_log('currentgrade: '.print_r($currentgrade, true));
 
     if (!empty($currentgrade->items[0]->grades)) {
         $currentgrade = reset($currentgrade->items[0]->grades);
@@ -499,6 +500,39 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
             $cm->set_after_link($html);
         }
     }
+}*/
+
+/**
+ * This will change the activity module icon to represent the grade percentage.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_subcourse_cm_info_dynamic(cm_info $cm) {
+    global $USER;
+
+    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
+    $gradepass = $currentgrade->items[0]->gradepass;
+    
+    error_log("gradepass: $gradepass");
+    
+    if ($gradepass == 0) {
+        error_log($gradepass == 0);
+        $gradepass = $currentgrade->items[0]->grademax;
+    }
+    
+    error_log('currentgrade: '.print_r($currentgrade, true));
+
+    if (!empty($currentgrade->items[0]->grades)) {
+        $currentgrade = reset($currentgrade->items[0]->grades);
+        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
+            $grade = $currentgrade->grade;
+            $gradepercent = ($grade / $gradepass) * 100;
+            $gradeicon = ceil($gradepercent / 5);
+            error_log("grade icon: gradepass: $gradepass - grade: $grade - gradepercent: $gradepercent - gradeicon: $gradeicon");
+            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-' . $gradeicon . '.svg'));
+        }
+    }
 }
 
 /**
@@ -506,5 +540,5 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
  * @return array
  */
 function subcourse_get_fetched_item_fields() {
-    return array('gradetype', 'grademax', 'grademin', 'scaleid');
+    return array('gradetype', 'grademax', 'grademin', 'gradepass', 'scaleid');
 }
