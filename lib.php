@@ -491,7 +491,7 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
     global $USER;
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-
+    
     if (!empty($currentgrade->items[0]->grades)) {
         $currentgrade = reset($currentgrade->items[0]->grades);
         if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
@@ -530,6 +530,9 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
             // Convert the percent complete to a whole fraction of 20 to match the icon images.
             $gradeicon = floor(subcourse_percent_complete($gradepass, $grade) / 5);
             $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-' . $gradeicon . '.svg'));
+        } else {
+            // No grades recorded yet
+            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-0.svg'));
         }
     }
 }
