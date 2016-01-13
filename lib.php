@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -27,10 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir.'/gradelib.php');
 
-////////////////////////////////////////////////////////////////////////////////
-// Moodle core API                                                            //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Returns the information if the module supports a feature
  *
@@ -40,14 +35,22 @@ require_once($CFG->libdir.'/gradelib.php');
  */
 function subcourse_supports($feature) {
     switch($feature) {
-        case FEATURE_GRADE_HAS_GRADE:   return true;
-        case FEATURE_MOD_INTRO:         return true;
-        case FEATURE_SHOW_DESCRIPTION:  return true;
-        case FEATURE_GROUPS:            return true;
-        case FEATURE_GROUPINGS:         return true;
-        case FEATURE_GROUPMEMBERSONLY:  return true;
-        case FEATURE_BACKUP_MOODLE2:    return true;
-        default:                        return null;
+        case FEATURE_GRADE_HAS_GRADE:
+            return true;
+        case FEATURE_MOD_INTRO:
+            return true;
+        case FEATURE_SHOW_DESCRIPTION:
+            return true;
+        case FEATURE_GROUPS:
+            return true;
+        case FEATURE_GROUPINGS:
+            return true;
+        case FEATURE_GROUPMEMBERSONLY:
+            return true;
+        case FEATURE_BACKUP_MOODLE2:
+            return true;
+        default:
+            return null;
     }
 }
 
@@ -71,8 +74,8 @@ function subcourse_add_instance(stdClass $subcourse) {
     $newid = $DB->insert_record("subcourse", $subcourse);
 
     if (!empty($subcourse->refcourse)) {
-        // create grade_item but do not fetch grades - the context does not exist yet and we can't
-        // get users by capability
+        // Create grade_item but do not fetch grades.
+        // The context does not exist yet and we can't get users by capability.
         subcourse_grades_update($subcourse->course, $newid, $subcourse->refcourse, $subcourse->name, true);
     }
 
@@ -127,7 +130,7 @@ function subcourse_update_instance(stdClass $subcourse) {
 function subcourse_delete_instance($id) {
     global $DB;
 
-    // Check the instance exists
+    // Check the instance exists.
     if (!$subcourse = $DB->get_record("subcourse", array("id" => $id))) {
         return false;
     }
@@ -153,10 +156,6 @@ function subcourse_delete_instance($id) {
 function subcourse_get_participants($subcourseid) {
     return false;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Reporting API                                                              //
-////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Return a small object with summary information about what a
@@ -199,26 +198,16 @@ function subcourse_user_complete($course, $user, $mod, $subcourse) {
  * @param $course
  * @param $isteacher
  * @param $timestart
- * @return boolean
+ * @return boolean true if anything was printed, otherwise false
  * @todo Finish documenting this function
  */
 function subcourse_print_recent_activity($course, $isteacher, $timestart) {
-    return false; //  True if anything was printed, otherwise false
+    return false;
 }
-
-////////////////////////////////////////////////////////////////////////////////
-// Gradebook API                                                              //
-////////////////////////////////////////////////////////////////////////////////
 
 /**
  * Must return an array of grades for a given instance of this module,
  * indexed by user.  It also returns a maximum allowed grade.
- *
- * Example:
- *    $return->grades = array of grades;
- *    $return->maxgrade = maximum allowed grade;
- *
- *    return $return;
  *
  * @param int $subcourseid ID of an instance of this module
  * @return stdClass|null object with an array of grades and with the maximum grade
@@ -264,10 +253,6 @@ function subcourse_scale_used_anywhere($scaleid) {
     return false;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Internal                                                                   //
-////////////////////////////////////////////////////////////////////////////////
-
 /**
  * Returns the list of courses the grades can be taken from
  *
@@ -282,7 +267,7 @@ function subcourse_scale_used_anywhere($scaleid) {
 function subcourse_available_courses($userid = null) {
     global $COURSE, $USER, $DB;
 
-    $courses = array(); // to be returned
+    $courses = array();
     if (empty($userid)) {
         $userid = $USER->id;
     }
@@ -333,8 +318,8 @@ function subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly = 
     $return->grades = array();
 
     $refgradeitem = grade_item::fetch_course_item($refcourseid);
-    
-    // get grade_item info
+
+    // Get grade_item info.
     foreach ($fetchedfields as $property) {
         if (!empty($refgradeitem->$property)) {
             $return->$property = $refgradeitem->$property;
@@ -342,8 +327,8 @@ function subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly = 
             $return->$property = null;
         }
     }
-    
-    // if the remote grade_item is non-global scale, do not fetch grades - they can't be used
+
+    // If the remote grade_item is non-global scale, do not fetch grades - they can't be used.
     if (($refgradeitem->gradetype == GRADE_TYPE_SCALE) && (!subcourse_is_global_scale($refgradeitem->scaleid))) {
         $gradeitemonly = true;
         debugging(get_string('errlocalremotescale', 'subcourse'));
@@ -351,7 +336,7 @@ function subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly = 
     }
 
     if (!$gradeitemonly) {
-        // get grades
+        // Get grades.
         $cm = get_coursemodule_from_instance("subcourse", $subcourseid);
         $context = context_module::instance($cm->id);
         $users = get_users_by_capability($context, 'mod/subcourse:begraded', 'u.id,u.lastname',
@@ -397,9 +382,9 @@ function subcourse_grades_update($courseid, $subcourseid, $refcourseid, $itemnam
     $fetchedfields = subcourse_get_fetched_item_fields();
 
     $refgrades = subcourse_fetch_refgrades($subcourseid, $refcourseid, $gradeitemonly);
-    
+
     if (!empty($refgrades->localremotescale)) {
-        // unable to fetch remote grades - local scale is used in the remote course
+        // Unable to fetch remote grades - local scale is used in the remote course.
         return GRADE_UPDATE_FAILED;
     }
 
@@ -420,7 +405,7 @@ function subcourse_grades_update($courseid, $subcourseid, $refcourseid, $itemnam
         $params['reset'] = true;
         $grades = null;
     }
-    
+
     return grade_update('mod/subcourse', $courseid, 'mod', 'subcourse', $subcourseid,
                         0, $grades, $params);
 }
@@ -440,10 +425,10 @@ function subcourse_is_global_scale($scaleid) {
     }
 
     if (!$DB->get_record('scale', array('id' => $scaleid, 'courseid' => 0), 'id')) {
-        // no such scale with courseid ==0
+        // No such scale with courseid 0.
         return false;
     } else {
-        // found the global scale
+        // Found the global scale.
         return true;
     }
 }
@@ -476,6 +461,7 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
     }
     list($sql, $params) = $DB->get_in_or_equal($subcourseids);
     $DB->set_field_select('subcourse', 'timefetched', $time, "id $sql", $params);
+
     return true;
 }
 
@@ -486,80 +472,26 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
  * @param cm_info $cm
  * @return void
  */
-/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress 
 function mod_subcourse_cm_info_view(cm_info $cm) {
     global $USER;
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-    
+
     if (!empty($currentgrade->items[0]->grades)) {
         $currentgrade = reset($currentgrade->items[0]->grades);
         if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
             $strgrade = $currentgrade->str_grade;
-            $html = html_writer::tag('div', get_string('currentgrade', 'subcourse', $strgrade), array('class' => 'contentafterlink'));
+            $html = html_writer::tag('div', get_string('currentgrade', 'subcourse', $strgrade),
+                array('class' => 'contentafterlink'));
             $cm->set_after_link($html);
         }
     }
 }
-
-END Academy Patch M#032 */
-
-/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
-/**
- * This will change the activity module icon to represent the grade percentage.
- *
- * @param cm_info $cm
- * @return void
- */
-function mod_subcourse_cm_info_dynamic(cm_info $cm) {
-    global $USER;
-
-    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-    $gradepass = $currentgrade->items[0]->gradepass;
-    
-    // Use the maximum grade if there is no passing grade set
-    if ($gradepass == 0) {
-        $gradepass = $currentgrade->items[0]->grademax;
-    }
-    
-    if (!empty($currentgrade->items[0]->grades)) {
-        $currentgrade = reset($currentgrade->items[0]->grades);
-        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
-            $grade = $currentgrade->grade;
-            
-            // Convert the percent complete to a whole fraction of 20 to match the icon images.
-            $gradeicon = floor(subcourse_percent_complete($gradepass, $grade) / 5);
-            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-' . $gradeicon . '.svg'));
-        } else {
-            // No grades recorded yet
-            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-0.svg'));
-        }
-    }
-}
-
-/**
- * This will get the percent complete given a grade and maxgrade.
- *
- * @param float $maxgrade
- * @param float $grade
- * @return float the percent complete
- */
-function subcourse_percent_complete($maxgrade, $grade) {
-    if ($grade >= $maxgrade) {
-        return 100;
-    } else {
-        return ($grade / $maxgrade) * 100;
-    }
-}
-
-/* END Academy Patch M#032 */
 
 /**
  * The list of fields to copy from remote grade_item
  * @return array
  */
 function subcourse_get_fetched_item_fields() {
-    /* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
-    return array('gradetype', 'grademax', 'grademin', 'gradepass', 'scaleid');
-    /* END Academy Patch M#032 */
+    return array('gradetype', 'grademax', 'grademin', 'scaleid');
 }
