@@ -472,11 +472,12 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
  * @param cm_info $cm
  * @return void
  */
+/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress 
 function mod_subcourse_cm_info_view(cm_info $cm) {
     global $USER;
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-
+    
     if (!empty($currentgrade->items[0]->grades)) {
         $currentgrade = reset($currentgrade->items[0]->grades);
         if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
@@ -488,10 +489,64 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
     }
 }
 
+END Academy Patch M#032 */
+
+/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
+/**
+ * This will change the activity module icon to represent the grade percentage.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_subcourse_cm_info_dynamic(cm_info $cm) {
+    global $USER;
+
+    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
+    $gradepass = $currentgrade->items[0]->gradepass;
+    
+    // Use the maximum grade if there is no passing grade set
+    if ($gradepass == 0) {
+        $gradepass = $currentgrade->items[0]->grademax;
+    }
+    
+    if (!empty($currentgrade->items[0]->grades)) {
+        $currentgrade = reset($currentgrade->items[0]->grades);
+        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
+            $grade = $currentgrade->grade;
+            
+            // Convert the percent complete to a whole fraction of 20 to match the icon images.
+            $gradeicon = floor(subcourse_percent_complete($gradepass, $grade) / 5);
+            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-' . $gradeicon . '.svg'));
+        } else {
+            // No grades recorded yet
+            $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-0.svg'));
+        }
+    }
+}
+
+/**
+ * This will get the percent complete given a grade and maxgrade.
+ *
+ * @param float $maxgrade
+ * @param float $grade
+ * @return float the percent complete
+ */
+function subcourse_percent_complete($maxgrade, $grade) {
+    if ($grade >= $maxgrade) {
+        return 100;
+    } else {
+        return ($grade / $maxgrade) * 100;
+    }
+}
+
+/* END Academy Patch M#032 */
+
 /**
  * The list of fields to copy from remote grade_item
  * @return array
  */
 function subcourse_get_fetched_item_fields() {
-    return array('gradetype', 'grademax', 'grademin', 'scaleid');
+    /* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
+    return array('gradetype', 'grademax', 'grademin', 'gradepass', 'scaleid');
+    /* END Academy Patch M#032 */
 }
