@@ -33,9 +33,13 @@ $cm = get_coursemodule_from_id('subcourse', $id, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 $subcourse = $DB->get_record('subcourse', array('id' => $cm->instance), '*', MUST_EXIST);
 
-require_login($course, true, $cm);
+/* START Academy Patch M#047 mod_subcourse/view.php should set page context */
 $context = context_module::instance($cm->id);
 $coursecontext = context_course::instance($course->id);
+
+$PAGE->set_context($coursecontext);
+require_login($course, true, $cm);
+/* END Academy Patch M#047 */
 
 $PAGE->set_url(new moodle_url('/mod/subcourse/view.php', array('id' => $cm->id)));
 $PAGE->set_title($subcourse->name);
