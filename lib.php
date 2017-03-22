@@ -513,6 +513,7 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
         if (!is_siteadmin()) {
             $cm->set_after_link(get_string('notenrolled', 'mod_subcourse'));
         }
+        $cm->set_content(subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext));
         return;
     }
 
@@ -537,6 +538,23 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
             $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-0.svg'));
         }
     }
+}
+
+function subcourse_get_course_summary(int $courseid, context_course $context) {
+    global $DB;
+    $course = $DB->get_record('course', array('id' => $courseid));
+
+    if ($course->summary) {
+        $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
+        $summary = file_rewrite_pluginfile_urls($course->summary, 'pluginfile.php', $context->id, 'course', 'summary', null);
+        $summary = format_text($summary, $course->summaryformat, $options, $course->id);
+        
+        $content = html_writer::start_tag('div', array('class' => 'summary'));
+        $content.= $summary;
+        $content.= html_writer::end_tag('div'); // .summary
+        return $content;
+    }
+    return;
 }
 
 /**
