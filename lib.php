@@ -510,7 +510,9 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     if (!is_enrolled($subcoursecontext)) {
         // The student is not enrolled
         $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg'));
-        $cm->set_after_link(get_string('notenrolled', 'mod_subcourse'));
+        if (!is_siteadmin()) {
+            $cm->set_after_link(get_string('notenrolled', 'mod_subcourse'));
+        }
         return;
     }
 
