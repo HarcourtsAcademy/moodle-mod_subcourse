@@ -491,7 +491,7 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
 
 END Academy Patch M#032 */
 
-/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
+/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress and enrolment status */
 /**
  * This will change the activity module icon to represent the grade percentage.
  *
@@ -499,7 +499,20 @@ END Academy Patch M#032 */
  * @return void
  */
 function mod_subcourse_cm_info_dynamic(cm_info $cm) {
-    global $USER;
+    global $DB, $USER;
+    
+    $subcourse = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, refcourse');
+    if (empty($subcourse->refcourse)) {
+        return null;
+    }
+    
+    $subcoursecontext = \context_course::instance($subcourse->refcourse);
+    if (!is_enrolled($subcoursecontext)) {
+        // The student is not enrolled
+        $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg'));
+        $cm->set_after_link(get_string('notenrolled', 'mod_subcourse'));
+        return;
+    }
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
     $gradepass = $currentgrade->items[0]->gradepass;
