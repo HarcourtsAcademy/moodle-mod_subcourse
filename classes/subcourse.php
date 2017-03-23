@@ -17,13 +17,14 @@ class subcourse {
     
     public $id,
             $course,
-            $name,
-            $refcourse,
+            $isenrolled,
+            $islocal,
             $localcourse,
             $localcoursecontext,
-            $isenrolled,
-            $remotecourse,
-            $islocal;
+            $name,
+            $progress,
+            $refcourse,
+            $remotecourse;
     
     public function __construct($id, $course, $name, $refcourse) {
         global $DB;
@@ -90,28 +91,80 @@ class subcourse {
      * @return String
      */
     private function get_local_course_summary() {
-        global $DB;
-
         if ($this->localcourse->summary) {
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = file_rewrite_pluginfile_urls($this->localcourse->summary, 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
-            $summary = format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
-
             $content = \html_writer::start_tag('div', array('class' => 'summary'));
-            $content.= $summary;
+            $content.= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
             $content.= \html_writer::end_tag('div'); // .summary
             return $content;
         }
         return '';
     }
     
-    public function get_progress() {
+    function percent_complete($maxgrade, $grade) {
+        if ($grade >= $maxgrade) {
+            return 100;
+        }
+        return floor( ($grade / $maxgrade) * 100 );
+    }
+    
+    private function get_progress() {
+        if (!empty($this->progress)) {
+            return $this->progress;
+        }
+        
+        if ($this->islocal) {
+            $this->progress = $this->get_local_progress();
+        } else {
+            $this->progress = $this->get_remote_progress();
+        }
+        
+        return $this->progress;
+    }
+    
+    private function get_local_progress() {
+        global $USER;
+
+        $currentgrade = grade_get_grades($this->course, 'mod', 'subcourse', $this->id, $USER->id);
+        $gradepass = $currentgrade->items[0]->gradepass;
+
+        // Use the maximum grade if there is no passing grade set
+        if ($gradepass == 0) {
+            $gradepass = $currentgrade->items[0]->grademax;
+        }
+
+        if (!empty($currentgrade->items[0]->grades)) {
+            $currentgrade = reset($currentgrade->items[0]->grades);
+            if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
+                $grade = $currentgrade->grade;
+
+                return $this->percent_complete($gradepass, $grade);
+            }
+        }
+
+        return 0;
+    }
+    
+    private function get_remote_progress () {
+        return 21;
+    }
+    
+    public function get_progress_bar() {
         //$progress    = subcourse_get_progress($cm);
-        $progress = 25;
+        $progress = $this->get_progress();
         $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
 
         $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-        $progressbar.= \html_writer::div("$progress% Complete ", 'bar', array('style' => "width: $progress%;"));
+        if (!$this->isenrolled) {
+            $progressbar.= \html_writer::div('Not enrolled', 'bar bar-empty', array('style' => "width: 100%;"));
+        } elseif (7 < $progress && $progress < 100) {
+            $progressbar.= \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
+        } elseif ($progress > 0) {
+            $progressbar.= \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
+        } else {
+            $progressbar.= \html_writer::div('Not started', 'bar bar-empty', array('style' => "width: 100%;"));
+        }
         $progressbar.= \html_writer::end_div();
         
         return $progressbar;

@@ -533,73 +533,10 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
         return null;
     }
     
-//    if ($subcourse->islocal) {
-//        
-//        if (!$subcourse->isenrolled && !is_siteadmin()) {
-//            // The student is not enrolled
-//            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
-//            $content.= get_string('notenrolled', 'mod_subcourse');
-//        } else {
-//            $icon = subcourse_get_course_icon($cm);
-//            
-//            $progress    = subcourse_get_progress($cm);
-//            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
-//                    
-//            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-//            $progressbar.= html_writer::div("$progress% Complete ", 'bar', array('style' => "width: $progress%;"));
-//            $progressbar.= html_writer::end_div();
-//        }
-//        
-//    } else {
-//        // MNet remote courses
-//
-//        // Get whether the user is enrolled
-//        
-//        if (!$is_enrolled) {
-//            // The student is not enrolled
-//            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
-//            $content.= get_string('notenrolled', 'mod_subcourse');
-//        } else {
-//            $icon = new moodle_url('/mod/subcourse/pix/icon-0.svg');
-//            
-//            $progress    = 0; // TODO calculate real progress
-//            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
-//                    
-//            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-//            $progressbar.= html_writer::div('', 'bar', array('style' => "width: $progress%;"));
-//            $progressbar.= html_writer::end_div();
-//        }
-//        
-//    }
-    
     // Set the course module content to be the subcourse summary.
-    $cm->set_content($subcourse->get_progress(), $subcourse->get_course_summary());
+    $cm->set_content($subcourse->get_progress_bar(), $subcourse->get_course_summary());
     $cm->set_icon_url($subcourse->get_icon());
     
-}
-
-function subcourse_get_progress(cm_info $cm) {
-    global $USER;
-
-    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-    $gradepass = $currentgrade->items[0]->gradepass;
-    
-    // Use the maximum grade if there is no passing grade set
-    if ($gradepass == 0) {
-        $gradepass = $currentgrade->items[0]->grademax;
-    }
-    
-    if (!empty($currentgrade->items[0]->grades)) {
-        $currentgrade = reset($currentgrade->items[0]->grades);
-        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
-            $grade = $currentgrade->grade;
-            
-            // Convert the percent complete to a whole fraction of 20 to match the icon images.
-            return subcourse_percent_complete($gradepass, $grade);
-        }
-    }
-    
-    return 0;
 }
 
 /**
@@ -638,20 +575,7 @@ function subcourse_get_course_icon(cm_info $cm) {
     return null;
 }
 
-/**
- * This will get the percent complete given a grade and maxgrade.
- *
- * @param float $maxgrade
- * @param float $grade
- * @return float the percent complete
- */
-function subcourse_percent_complete($maxgrade, $grade) {
-    if ($grade >= $maxgrade) {
-        return 100;
-    } else {
-        return ($grade / $maxgrade) * 100;
-    }
-}
+
 /* END Academy Patch M#032 */
 
 /**
