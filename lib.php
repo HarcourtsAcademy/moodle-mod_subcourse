@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use mod_subcourse\subcourse;
+
 require_once($CFG->libdir.'/gradelib.php');
 require_once($CFG->dirroot.'/mnet/service/enrol/locallib.php'); // Academy Patch M#052
 
@@ -523,70 +525,56 @@ END Academy Patch M#032 */
 function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     global $DB;
     
-    $subcourse = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, refcourse');
+    $record = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, course, name, refcourse');
+    
+    $subcourse = new mod_subcourse\subcourse($record->id, $record->course, $record->name, $record->refcourse);
+    
     if (empty($subcourse->refcourse)) {
         return null;
     }
     
-    $content = '';
-    $coursesummary = false;
-    $icon = false;
-    $progressbar = '';
-    if ($subcourse->refcourse > 0) {
-        // Local courses
-        $subcoursecontext = \context_course::instance($subcourse->refcourse);
-        $coursesummary = subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
-        
-        if (!is_enrolled($subcoursecontext) && !is_siteadmin()) {
-            // The student is not enrolled
-            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
-            $content.= get_string('notenrolled', 'mod_subcourse');
-        } else {
-            $icon = subcourse_get_course_icon($cm);
-            
-            $progress    = subcourse_get_progress($cm);
-            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
-                    
-            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-            $progressbar.= html_writer::div("$progress% Complete ", 'bar', array('style' => "width: $progress%;"));
-            $progressbar.= html_writer::end_div();
-        }
-        
-    } else {
-        // MNet remote courses
-
-        // The remote course id is negative, convert it back
-        $remotecourseid = -1 * $subcourse->refcourse;
-
-        $remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $remotecourseid), '*', MUST_EXIST);
-        
-        // Get the course summary from the local DB table mnetservice_enrol_courses
-        $coursesummary = subcourse_get_remote_course_summary($remotecourse);
-        
-        // Get whether the user is enrolled
-        $is_enrolled = subcourse_get_remote_course_is_enrolled($remotecourse);
-        if (!$is_enrolled) {
-            // The student is not enrolled
-            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
-            $content.= get_string('notenrolled', 'mod_subcourse');
-        } else {
-            $icon = new moodle_url('/mod/subcourse/pix/icon-0.svg');
-            
-            $progress    = 0; // TODO calculate real progress
-            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
-                    
-            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-            $progressbar.= html_writer::div('', 'bar', array('style' => "width: $progress%;"));
-            $progressbar.= html_writer::end_div();
-        }
-        
-    }
+//    if ($subcourse->islocal) {
+//        
+//        if (!$subcourse->isenrolled && !is_siteadmin()) {
+//            // The student is not enrolled
+//            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
+//            $content.= get_string('notenrolled', 'mod_subcourse');
+//        } else {
+//            $icon = subcourse_get_course_icon($cm);
+//            
+//            $progress    = subcourse_get_progress($cm);
+//            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
+//                    
+//            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
+//            $progressbar.= html_writer::div("$progress% Complete ", 'bar', array('style' => "width: $progress%;"));
+//            $progressbar.= html_writer::end_div();
+//        }
+//        
+//    } else {
+//        // MNet remote courses
+//
+//        // Get whether the user is enrolled
+//        
+//        if (!$is_enrolled) {
+//            // The student is not enrolled
+//            $icon = new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
+//            $content.= get_string('notenrolled', 'mod_subcourse');
+//        } else {
+//            $icon = new moodle_url('/mod/subcourse/pix/icon-0.svg');
+//            
+//            $progress    = 0; // TODO calculate real progress
+//            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
+//                    
+//            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
+//            $progressbar.= html_writer::div('', 'bar', array('style' => "width: $progress%;"));
+//            $progressbar.= html_writer::end_div();
+//        }
+//        
+//    }
     
     // Set the course module content to be the subcourse summary.
-    $cm->set_content($progressbar . $content . $coursesummary);
-    if ($icon) {
-        $cm->set_icon_url($icon);
-    }
+    $cm->set_content($subcourse->get_progress(), $subcourse->get_course_summary());
+    $cm->set_icon_url($subcourse->get_icon());
     
 }
 
@@ -649,91 +637,6 @@ function subcourse_get_course_icon(cm_info $cm) {
     
     return null;
 }
-
-/**
- * 
- * Returns the local course summary formatted for display.
- * 
- * @global type $DB
- * @param int $courseid
- * @param context_course $context
- * @return type
- */
-function subcourse_get_course_summary(int $courseid, context_course $context) {
-    global $DB;
-    $course = $DB->get_record('course', array('id' => $courseid));
-
-    if ($course->summary) {
-        $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
-        $summary = file_rewrite_pluginfile_urls($course->summary, 'pluginfile.php', $context->id, 'course', 'summary', null);
-        $summary = format_text($summary, $course->summaryformat, $options, $course->id);
-        
-        $content = html_writer::start_tag('div', array('class' => 'summary'));
-        $content.= $summary;
-        $content.= html_writer::end_tag('div'); // .summary
-        return $content;
-    }
-    return;
-}
-
-/**
- * 
- * Returns the remote course summary formatted for display.
- * 
- * @param type $remotecourse
- * @return type
- */
-function subcourse_get_remote_course_summary($remotecourse) {
-
-    if ($remotecourse->summary) {
-        $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
-        $summary = format_text($remotecourse->summary, $remotecourse->summaryformat, $options);
-        
-        $content = html_writer::start_tag('div', array('class' => 'summary'));
-        $content.= $summary;
-        $content.= html_writer::end_tag('div'); // .summary
-        return $content;
-    }
-    return;
-}
-
-
-/**
- * 
- * Returns true if the current user is enrolled in the remote course.
- * 
- * @global type $DB
- * @global type $USER
- * @param type $remotecourse
- * @return boolean
- */
-function subcourse_get_remote_course_is_enrolled($remotecourse) {
-    global $DB, $USER;
-    
-    $service = mnetservice_enrol::get_instance();
-
-    $lastfetchenrolments = get_config('mnetservice_enrol', 'lastfetchenrolments');
-    $usecache = true;
-    if (!$usecache or empty($lastfetchenrolments) or (time()-$lastfetchenrolments > 600)) {
-        // fetch fresh data from remote if we just came from the course selection screen
-        // or every 10 minutes
-        $usecache = false;
-        $result = $service->req_course_enrolments($remotecourse->hostid, $remotecourse->remoteid, $usecache);
-
-        if ($result !== true) {
-            error_log($service->format_error_message($result));
-            return false;
-        }
-    }
-    
-    // Get whether the current user is enrolled in the remote course.
-    $conditions = array('hostid' => $remotecourse->hostid,
-                        'remotecourseid' => $remotecourse->remoteid,
-                        'userid' => $USER->id);
-    $record = $DB->get_record('mnetservice_enrol_enrolments', $conditions, '*', IGNORE_MULTIPLE);
-    return(!empty($record));
-}
-
 
 /**
  * This will get the percent complete given a grade and maxgrade.
