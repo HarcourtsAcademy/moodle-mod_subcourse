@@ -507,16 +507,20 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     }
     
     $subcoursecontext = \context_course::instance($subcourse->refcourse);
+    $content = '';
     if (!is_enrolled($subcoursecontext)) {
         // The student is not enrolled
         $cm->set_icon_url(new moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg'));
-        $content = '';
         if (!is_siteadmin()) {
             $content.= get_string('notenrolled', 'mod_subcourse');
         }
+        
         $content.= subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
         $cm->set_content($content);
         return;
+    } else {
+        $content.= subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
+        $cm->set_content($content);
     }
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
