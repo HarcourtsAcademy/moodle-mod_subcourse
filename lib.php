@@ -518,10 +518,11 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
         $content.= subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
         $cm->set_content($content);
         return;
-    } else {
-        $content.= subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
-        $cm->set_content($content);
     }
+    
+    // Set the course module content to be the subcourse summary.
+    $content.= subcourse_get_course_summary($subcourse->refcourse, $subcoursecontext);
+    $cm->set_content($content);
 
     $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
     $gradepass = $currentgrade->items[0]->gradepass;
