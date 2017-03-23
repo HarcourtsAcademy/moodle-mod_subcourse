@@ -534,7 +534,7 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     }
     
     // Set the course module content to be the subcourse summary.
-    $cm->set_content($subcourse->get_progress_bar(), $subcourse->get_course_summary());
+    $cm->set_content($subcourse->get_progress_bar() . $subcourse->get_course_summary());
     $cm->set_icon_url($subcourse->get_icon());
     
 }

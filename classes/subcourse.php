@@ -69,11 +69,18 @@ class subcourse {
     public function get_icon() {
         if (!$this->isenrolled && !is_siteadmin()) {
             // The student is not enrolled
-            return new \moodle_url('/mod/subcourse/pix/icon-not-enrolled.svg');
+            return new \moodle_url('/mod/subcourse/pix/icon-notenrolled.svg');
         }
         
-        return new \moodle_url('/mod/subcourse/pix/icon-0.svg');
-        //return new \moodle_url('/mod/subcourse/pix/icon.svg');
+        if ($this->isenrolled) {
+            if ($this->progress == 100) {
+                return new \moodle_url('/mod/subcourse/pix/icon-complete.svg');
+            } else {
+                return new \moodle_url('/mod/subcourse/pix/icon-inprogress.svg');
+            }
+        }
+        
+        return new \moodle_url('/mod/subcourse/pix/icon.svg');
     }
     
     public function get_course_summary() {
@@ -91,7 +98,7 @@ class subcourse {
      * @return String
      */
     private function get_local_course_summary() {
-        if ($this->localcourse->summary) {
+        if ($this->localcourse && $this->localcourse->summary) {
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = file_rewrite_pluginfile_urls($this->localcourse->summary, 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
             $content = \html_writer::start_tag('div', array('class' => 'summary'));
@@ -158,7 +165,7 @@ class subcourse {
         $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
         if (!$this->isenrolled) {
             $progressbar.= \html_writer::div('Not enrolled', 'bar bar-empty', array('style' => "width: 100%;"));
-        } elseif (7 < $progress && $progress < 100) {
+        } elseif (7 < $progress && $progress <= 100) {
             $progressbar.= \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
         } elseif ($progress > 0) {
             $progressbar.= \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
