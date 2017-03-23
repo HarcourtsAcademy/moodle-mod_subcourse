@@ -531,6 +531,7 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     $content = '';
     $coursesummary = false;
     $icon = false;
+    $progressbar = '';
     if ($subcourse->refcourse > 0) {
         // Local courses
         $subcoursecontext = \context_course::instance($subcourse->refcourse);
@@ -542,6 +543,13 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
             $content.= get_string('notenrolled', 'mod_subcourse');
         } else {
             $icon = subcourse_get_course_icon($cm);
+            
+            $progress    = subcourse_get_progress($cm);
+            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
+                    
+            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
+            $progressbar.= html_writer::div("$progress% Complete ", 'bar', array('style' => "width: $progress%;"));
+            $progressbar.= html_writer::end_div();
         }
         
     } else {
@@ -563,15 +571,47 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
             $content.= get_string('notenrolled', 'mod_subcourse');
         } else {
             $icon = new moodle_url('/mod/subcourse/pix/icon-0.svg');
+            
+            $progress    = 0; // TODO calculate real progress
+            $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
+                    
+            $progressbar.= html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
+            $progressbar.= html_writer::div('', 'bar', array('style' => "width: $progress%;"));
+            $progressbar.= html_writer::end_div();
         }
+        
     }
     
     // Set the course module content to be the subcourse summary.
-    $cm->set_content($content . $coursesummary);
+    $cm->set_content($progressbar . $content . $coursesummary);
     if ($icon) {
         $cm->set_icon_url($icon);
     }
     
+}
+
+function subcourse_get_progress(cm_info $cm) {
+    global $USER;
+
+    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
+    $gradepass = $currentgrade->items[0]->gradepass;
+    
+    // Use the maximum grade if there is no passing grade set
+    if ($gradepass == 0) {
+        $gradepass = $currentgrade->items[0]->grademax;
+    }
+    
+    if (!empty($currentgrade->items[0]->grades)) {
+        $currentgrade = reset($currentgrade->items[0]->grades);
+        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
+            $grade = $currentgrade->grade;
+            
+            // Convert the percent complete to a whole fraction of 20 to match the icon images.
+            return subcourse_percent_complete($gradepass, $grade);
+        }
+    }
+    
+    return 0;
 }
 
 /**
