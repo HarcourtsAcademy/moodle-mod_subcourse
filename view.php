@@ -30,8 +30,24 @@ $id = required_param('id', PARAM_INT);
 $fetchnow = optional_param('fetchnow', 0, PARAM_INT);
 
 $cm = get_coursemodule_from_id('subcourse', $id, 0, false, MUST_EXIST);
-$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+
+/* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses. */
 $subcourse = $DB->get_record('subcourse', array('id' => $cm->instance), '*', MUST_EXIST);
+
+if ($subcourse->refcourse < 0) {
+    // The remote course id is negative, convert it back.
+    $remotecourseid = -1 * $subcourse->refcourse;
+    
+    // Get the remote MNet course from the local DB table.
+    $remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $remotecourseid), '*', MUST_EXIST);
+    
+    // Redirect to the course on the remote MNet server.
+    redirect(new moodle_url('/auth/mnet/jump.php', array('hostid' => $remotecourse->hostid,
+        'wantsurl' => '/course/view.php?id='.$remotecourse->remoteid)));
+}
+/* END Academy Patch M#052 */
+
+$course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
 /* START Academy Patch M#047 mod_subcourse/view.php should set page context */
 $context = context_module::instance($cm->id);
