@@ -118,7 +118,17 @@ class mod_subcourse_mod_form extends moodleform_mod {
 
         } else {
             $catlist = coursecat::make_categories_list('', 0, ' / ');
+            
+            /* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses */
+            $remotecourses = array();
+            
             foreach ($mycourses as $mycourse) {
+                if ($mycourse->id < 0) {
+                    $remotecourses[$mycourse->id] = $mycourse;
+                    continue;
+                }
+                /* END Academy Patch M#052 */
+                
                 if (empty($options[$catlist[$mycourse->category]])) {
                     $options[$catlist[$mycourse->category]] = array();
                 }
@@ -132,6 +142,15 @@ class mod_subcourse_mod_form extends moodleform_mod {
             if (!empty($includenoref)) {
                 $options['---'] = array(0 => get_string('none'));
             }
+            
+            /* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses */
+            if (!empty($remotecourses)) {
+                foreach ($remotecourses as $remotecourse) {
+                    $courselabel = $remotecourse->fullname.' ('.$remotecourse->shortname.')';
+                    $options['- MNet Remote Courses -'][$remotecourse->id] = $courselabel;
+                }
+            }
+            /* END Academy Patch M#052 */
 
             $mform->addElement('selectgroups', 'refcourse', get_string('refcourselabel', 'subcourse'), $options);
 
