@@ -304,9 +304,6 @@ function subcourse_available_courses($userid = null) {
             $courses[$remoteid] = $val;
         }
     }
-    
-    error_log('remotecourses: ' . print_r($remotecourses, true));
-    
     /* END Academy Patch M#052 */
 
     return $courses;
@@ -526,56 +523,17 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     global $DB;
     
     $record = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, course, name, refcourse');
-    
     $subcourse = new mod_subcourse\subcourse($record->id, $record->course, $record->name, $record->refcourse);
     
     if (empty($subcourse->refcourse)) {
         return null;
     }
     
-    // Set the course module content to be the subcourse summary.
+    // Set the course module content
     $cm->set_content($subcourse->get_progress_bar() . $subcourse->get_course_summary());
     $cm->set_icon_url($subcourse->get_icon());
     
 }
-
-/**
- * 
- * Get the subcourse icon for a local course.
- * 
- * @global type $USER
- * @param cm_info $cm
- * @return \moodle_url
- */
-function subcourse_get_course_icon(cm_info $cm) {
-    global $USER;
-
-    $currentgrade = grade_get_grades($cm->course, 'mod', 'subcourse', $cm->instance, $USER->id);
-    $gradepass = $currentgrade->items[0]->gradepass;
-    
-    // Use the maximum grade if there is no passing grade set
-    if ($gradepass == 0) {
-        $gradepass = $currentgrade->items[0]->grademax;
-    }
-    
-    if (!empty($currentgrade->items[0]->grades)) {
-        $currentgrade = reset($currentgrade->items[0]->grades);
-        if (isset($currentgrade->grade) and !($currentgrade->hidden)) {
-            $grade = $currentgrade->grade;
-            
-            // Convert the percent complete to a whole fraction of 20 to match the icon images.
-            $gradeicon = floor(subcourse_percent_complete($gradepass, $grade) / 5);
-            return new moodle_url('/mod/subcourse/pix/icon-' . $gradeicon . '.svg');
-        } else {
-            // No grades recorded yet
-            return new moodle_url('/mod/subcourse/pix/icon-0.svg');
-        }
-    }
-    
-    return null;
-}
-
-
 /* END Academy Patch M#032 */
 
 /**
