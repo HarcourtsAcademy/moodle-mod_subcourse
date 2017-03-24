@@ -122,18 +122,19 @@ class subcourse {
         }
         
         if ($this->islocal) {
-            $this->progress = $this->get_local_progress();
+            $this->progress = $this->get_local_course_progress();
         } else {
-            $this->progress = $this->get_remote_progress();
+            $this->progress = $this->get_remote_course_progress();
         }
         
         return $this->progress;
     }
     
-    private function get_local_progress() {
+    private function get_local_course_progress() {
         global $USER;
 
         $currentgrade = grade_get_grades($this->course, 'mod', 'subcourse', $this->id, $USER->id);
+//        error_log('$currentgrade: ' . print_r($currentgrade, true));
         $gradepass = $currentgrade->items[0]->gradepass;
 
         // Use the maximum grade if there is no passing grade set
@@ -153,8 +154,52 @@ class subcourse {
         return 0;
     }
     
-    private function get_remote_progress () {
-        return 21;
+    private function get_remote_course_progress () {
+        global $CFG, $DB, $USER;
+        
+        if ($this->islocal) {
+            throw new coding_exception('get_remote_course_progress() called on local course.');
+        }
+        
+        if (empty($this->remotecourse)) {
+            throw new coding_exception('get_remote_course_progress called before the remote course was initiated');
+        }
+    
+        require_once($CFG->dirroot.'/mnet/service/enrol/locallib.php');
+
+        $remotecoursegrades = array();
+
+        $username       = $USER->username;
+        $courseid       = $this->remotecourse->remoteid;
+        $mnethostid     = $this->remotecourse->hostid;
+
+        $service = \mnetservice_enrol::get_instance();
+
+        if ($service->is_available()) {
+            $remotecoursegrades = $service->req_course_grades($mnethostid, $courseid, $username);
+        }
+
+        if (!is_array($remotecoursegrades)) {
+            return 0;
+        }
+        
+        $gradepass = $remotecoursegrades['gradepass'];
+
+        // Use the maximum grade if there is no passing grade set
+        if ($gradepass == 0) {
+            $gradepass = $remotecoursegrades['grademax'];
+        }
+
+        if (!empty($remotecoursegrades['grade']) &&
+            isset($remotecoursegrades['grade']['finalgrade']) &&
+            !($remotecoursegrades['hidden'])) {
+            
+            $grade = $remotecoursegrades['grade']['finalgrade'];
+
+            return $this->percent_complete($gradepass, $grade);
+        }
+
+        return 0;
     }
     
     public function get_progress_bar() {
