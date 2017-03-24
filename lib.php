@@ -493,7 +493,7 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
  * @param cm_info $cm
  * @return void
  */
-/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress 
+/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress and enrolment status.
 function mod_subcourse_cm_info_view(cm_info $cm) {
     global $USER;
 
@@ -510,9 +510,6 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
     }
 }
 
-END Academy Patch M#032 */
-
-/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress and enrolment status */
 /**
  * This will change the activity module icon to represent the grade percentage.
  *
