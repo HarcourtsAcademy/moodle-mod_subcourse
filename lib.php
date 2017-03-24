@@ -527,7 +527,7 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     }
     
     // Set the course module content
-    $cm->set_content($subcourse->get_progress_bar() . $subcourse->get_course_summary());
+    $cm->set_content($subcourse->get_progress_bar() . $subcourse->get_content() . $subcourse->get_course_summary());
     $cm->set_icon_url($subcourse->get_icon());
     
 }
