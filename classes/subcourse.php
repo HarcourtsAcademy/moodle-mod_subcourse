@@ -207,16 +207,18 @@ class subcourse {
         $progress = $this->get_progress();
         $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
 
-        $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
         if (!$this->isenrolled) {
-            $progressbar.= \html_writer::div('Not enrolled', 'bar bar-empty', array('style' => "width: 100%;"));
+            $progressbarsection = \html_writer::div('Not enrolled', 'bar bar-empty', array('style' => "width: 100%;"));
         } elseif (7 < $progress && $progress <= 100) {
-            $progressbar.= \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
+            $progressbarsection = \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
         } elseif ($progress > 0) {
-            $progressbar.= \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
+            $progressbarsection = \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
         } else {
-            $progressbar.= \html_writer::div('Not started', 'bar bar-empty', array('style' => "width: 100%;"));
+            $progressbarclass.= ' progress-striped';
+            $progressbarsection = \html_writer::div('Ready to start', 'bar', array('style' => "width: 100%;"));
         }
+        $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
+        $progressbar.= $progressbarsection;
         $progressbar.= \html_writer::end_div();
         
         return $progressbar;
