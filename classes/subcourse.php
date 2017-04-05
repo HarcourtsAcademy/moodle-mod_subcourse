@@ -99,9 +99,11 @@ class subcourse {
      */
     private function get_local_course_summary() {
         if ($this->localcourse && $this->localcourse->summary) {
+            $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
+            
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = file_rewrite_pluginfile_urls($this->localcourse->summary, 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
-            $content = \html_writer::start_tag('div', array('class' => 'summary'));
+            $content = \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
             $content.= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
             $content.= \html_writer::end_tag('div'); // .summary
             return $content;
@@ -235,10 +237,12 @@ class subcourse {
         $content = '';
 
         if ($this->remotecourse->summary) {
+            $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
+            
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = format_text($this->remotecourse->summary, $this->remotecourse->summaryformat, $options);
 
-            $content.= \html_writer::start_tag('div', array('class' => 'summary'));
+            $content.= \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
             $content.= $summary;
             $content.= \html_writer::end_tag('div'); // .summary
         }
