@@ -210,7 +210,7 @@ class subcourse {
         $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
 
         if (!$this->isenrolled) {
-            $progressbarsection = \html_writer::div('Not enrolled', 'bar bar-empty', array('style' => "width: 100%;"));
+            $progressbarsection = \html_writer::div('Not registered', 'bar bar-empty', array('style' => "width: 100%;"));
         } elseif (7 < $progress && $progress <= 100) {
             $progressbarsection = \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
         } elseif ($progress > 0) {
