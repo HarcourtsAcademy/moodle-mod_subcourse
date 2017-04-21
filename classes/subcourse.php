@@ -1,20 +1,28 @@
 <?php
-
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace mod_subcourse;
 
 /**
- * Description of subcourse
- *
- * @author timbutler
+ * @package    mod_subcourse
+ * @copyright  2014 Vadim Dvorovenko (Vadimon@mail.ru)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class subcourse {
-    
+
     public $id,
             $course,
             $isenrolled,
@@ -25,53 +33,47 @@ class subcourse {
             $progress,
             $refcourse,
             $remotecourse;
-    
+
     public function __construct($id, $course, $name, $refcourse) {
         global $DB;
-        
+
         $this->id = $id;
         $this->course = $course;
         $this->name = $name;
-        
+
         if ($refcourse > 0) {
             $this->refcourse = $refcourse;
             $this->islocal = true;
             $this->localcourse = $DB->get_record('course', array('id' => $this->refcourse));
             $this->localcoursecontext = \context_course::instance($this->refcourse);
             $this->isenrolled = is_enrolled($this->localcoursecontext);
-            
+
         } else {
-            // The remote course id is negative, convert it back
+            // The remote course id is negative, convert it back.
             $this->refcourse = -1 * $refcourse;
 
             $this->islocal = false;
             $this->remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $this->refcourse), '*', MUST_EXIST);
             $this->isenrolled = $this->get_remote_course_is_enrolled();
         }
-        
-        if ($this->islocal) {
-        }
+
     }
-    
-//    public function __get($name) {
-//        return $this->$name;
-//    }
-    
+
     public function get_content() {
         $content = '';
         if (!$this->isenrolled && !is_siteadmin()) {
-            // The student is not enrolled
-            $content.= get_string('notenrolled', 'mod_subcourse');
+            // The student is not enrolled.
+            $content .= get_string('notenrolled', 'mod_subcourse');
         }
         return $content;
     }
-    
+
     public function get_icon() {
         if (!$this->isenrolled && !is_siteadmin()) {
-            // The student is not enrolled
+            // The student is not enrolled.
             return new \moodle_url('/mod/subcourse/pix/icon-notenrolled.svg');
         }
-        
+
         if ($this->isenrolled) {
             if ($this->progress == 100) {
                 return new \moodle_url('/mod/subcourse/pix/icon-complete.svg');
@@ -79,82 +81,86 @@ class subcourse {
                 return new \moodle_url('/mod/subcourse/pix/icon-inprogress.svg');
             }
         }
-        
+
         return new \moodle_url('/mod/subcourse/pix/icon.svg');
     }
-    
+
     public function get_course_summary() {
         if ($this->islocal) {
             return $this->get_local_course_summary();
         }
         return $this->get_remote_course_summary();
     }
-    
+
     /**
-     * 
+     *
      * Returns the local course summary formatted for display.
-     * 
+     *
      * @global type $DB
      * @return String
      */
     private function get_local_course_summary() {
         if ($this->localcourse && $this->localcourse->summary) {
             $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
-            
-            $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
-            $summary = file_rewrite_pluginfile_urls($this->localcourse->summary, 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
-            
-            $content = \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
-            $content.= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
-            $content.= \html_writer::end_tag('div'); // .summary
 
-            // Display course registration links configured using enrol_harcourtsone instances
+            $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
+            $summary = file_rewrite_pluginfile_urls($this->localcourse->summary,
+                'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
+
+            $content = \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
+            $content .= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
+            $content .= \html_writer::end_tag('div');
+
+            // Display course registration links configured using enrol_harcourtsone instances.
             $enrolinstances = $this->get_local_course_enrolment_instances();
             foreach ($enrolinstances as $instance) {
-                $content.= \html_writer::start_tag('div', array('class' => 'registration'));
-                $content.= \html_writer::link($instance->customtext4, $instance->customchar1, array('class' => 'btn btn-link', 'target' => '_blank'));
+                $content .= \html_writer::start_tag('div', array('class' => 'registration'));
+                $content .= \html_writer::link($instance->customtext4, $instance->customchar1,
+                    array('class' => 'btn btn-link', 'target' => '_blank'));
+
                 if (!$this->isenrolled) {
-                    $icon = !empty($instance->customtext3) ? '<i class="fa fa-'.$instance->customtext3.'" aria-hidden="true"></i>&nbsp;' : '';
-                    $content.= \html_writer::link($instance->customtext1, $icon.$instance->customtext2,
+                    $icon = !empty($instance->customtext3) ? '<i class="fa fa-'.$instance->customtext3.'" aria-hidden="true">'.
+                        '</i>&nbsp;' : '';
+                    $content .= \html_writer::link($instance->customtext1, $icon.$instance->customtext2,
                         array('class' => 'btn btn-primary', 'target' => '_blank'));
                 }
-                $content.= \html_writer::end_tag('div'); // .registration
+
+                $content .= \html_writer::end_tag('div');
             }
 
             return $content;
         }
         return '';
     }
-    
-    function percent_complete($maxgrade, $grade) {
+
+    private function percent_complete($maxgrade, $grade) {
         if ($grade >= $maxgrade) {
             return 100;
         }
         return floor( ($grade / $maxgrade) * 100 );
     }
-    
+
     private function get_progress() {
         if (!empty($this->progress)) {
             return $this->progress;
         }
-        
+
         if ($this->islocal) {
             $this->progress = $this->get_local_course_progress();
         } else {
             $this->progress = $this->get_remote_course_progress();
         }
-        
+
         return $this->progress;
     }
-    
+
     private function get_local_course_progress() {
         global $USER;
 
         $currentgrade = grade_get_grades($this->course, 'mod', 'subcourse', $this->id, $USER->id);
-//        error_log('$currentgrade: ' . print_r($currentgrade, true));
         $gradepass = $currentgrade->items[0]->gradepass;
 
-        // Use the maximum grade if there is no passing grade set
+        // Use the maximum grade if there is no passing grade set.
         if ($gradepass == 0) {
             $gradepass = $currentgrade->items[0]->grademax;
         }
@@ -173,7 +179,7 @@ class subcourse {
 
     /**
      * Gets all instances of enrol_harcourtsone for the local course.
-     * 
+     *
      * @return stdClass
      */
     private function get_local_course_enrolment_instances() {
@@ -183,11 +189,11 @@ class subcourse {
             throw new coding_exception('get_local_course_enrolment_instances() called on remote course.');
         }
 
-        $sql = "SELECT 
+        $sql = "SELECT
                     *
                 FROM
                     {enrol} e
-                    JOIN 
+                    JOIN
                     {user_info_data} uid
                     ON e.customchar3 = uid.data
                     JOIN {user_info_field} uif
@@ -200,18 +206,18 @@ class subcourse {
                     AND uif.id = uid.fieldid;";
         return $DB->get_records_sql($sql, array($this->localcourse->id, $USER->id));
     }
-    
+
     private function get_remote_course_progress () {
         global $CFG, $DB, $USER;
-        
+
         if ($this->islocal) {
             throw new coding_exception('get_remote_course_progress() called on local course.');
         }
-        
+
         if (empty($this->remotecourse)) {
             throw new coding_exception('get_remote_course_progress called before the remote course was initiated');
         }
-    
+
         require_once($CFG->dirroot.'/mnet/service/enrol/locallib.php');
 
         $remotecoursegrades = array();
@@ -229,10 +235,10 @@ class subcourse {
         if (!is_array($remotecoursegrades)) {
             return 0;
         }
-        
+
         $gradepass = $remotecoursegrades['gradepass'];
 
-        // Use the maximum grade if there is no passing grade set
+        // Use the maximum grade if there is no passing grade set.
         if ($gradepass == 0) {
             $gradepass = $remotecoursegrades['grademax'];
         }
@@ -240,7 +246,7 @@ class subcourse {
         if (!empty($remotecoursegrades['grade']) &&
             isset($remotecoursegrades['grade']['finalgrade']) &&
             !($remotecoursegrades['hidden'])) {
-            
+
             $grade = $remotecoursegrades['grade']['finalgrade'];
 
             return $this->percent_complete($gradepass, $grade);
@@ -248,57 +254,56 @@ class subcourse {
 
         return 0;
     }
-    
+
     public function get_progress_bar() {
-        //$progress    = subcourse_get_progress($cm);
         $progress = $this->get_progress();
         $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
 
         if (!$this->isenrolled) {
             $progressbarsection = \html_writer::div('Not registered', 'bar bar-empty', array('style' => "width: 100%;"));
-        } elseif (7 < $progress && $progress <= 100) {
+        } else if (7 < $progress && $progress <= 100) {
             $progressbarsection = \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
-        } elseif ($progress > 0) {
+        } else if ($progress > 0) {
             $progressbarsection = \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
         } else {
-            $progressbarclass.= ' progress-striped';
+            $progressbarclass .= ' progress-striped';
             $progressbarsection = \html_writer::div('Ready to start', 'bar', array('style' => "width: 100%;"));
         }
         $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
-        $progressbar.= $progressbarsection;
-        $progressbar.= \html_writer::end_div();
-        
+        $progressbar .= $progressbarsection;
+        $progressbar .= \html_writer::end_div();
+
         return $progressbar;
     }
-    
+
     /**
-     * 
+     *
      * Returns the remote course summary formatted for display.
-     * 
+     *
      * @param type $remotecourse
      * @return String
      */
-    function get_remote_course_summary() {
+    private function get_remote_course_summary() {
         $content = '';
 
         if ($this->remotecourse->summary) {
             $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
-            
+
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = format_text($this->remotecourse->summary, $this->remotecourse->summaryformat, $options);
 
-            $content.= \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
-            $content.= $summary;
-            $content.= \html_writer::end_tag('div'); // .summary
+            $content .= \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
+            $content .= $summary;
+            $content .= \html_writer::end_tag('div');
 
         }
         return $content;
     }
-    
+
     /**
-     * 
+     *
      * Returns true if the current user is enrolled in the remote course.
-     * 
+     *
      * @global type $DB
      * @global type $USER
      * @param type $remotecourse
@@ -306,7 +311,7 @@ class subcourse {
      */
     private function get_remote_course_is_enrolled() {
         global $DB, $USER;
-        
+
         if (empty($this->remotecourse)) {
             return;
         }
@@ -315,14 +320,15 @@ class subcourse {
 
         $lastfetchenrolments = get_config('mnetservice_enrol', 'lastfetchenrolments');
         $usecache = true;
-        if (!$usecache or empty($lastfetchenrolments) or (time()-$lastfetchenrolments > 600)) {
-            // fetch fresh data from remote if we just came from the course selection screen
-            // or every 10 minutes
+        if (!$usecache or empty($lastfetchenrolments) or (time() - $lastfetchenrolments > 600)) {
+            /* fetch fresh data from remote if we just came from the course selection screen
+               or every 10 minutes. */
             $usecache = false;
             $result = $service->req_course_enrolments($this->remotecourse->hostid, $this->remotecourse->remoteid, $usecache);
 
             if ($result !== true) {
-                error_log($service->format_error_message($result));
+                require_once($CFG->dirroot.'/mnet/xmlrpc/serverlib.php');
+                throw new \moodle_exception($service->format_error_message($result), 'mnet');
                 return false;
             }
         }
