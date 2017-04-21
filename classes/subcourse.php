@@ -103,9 +103,24 @@ class subcourse {
             
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = file_rewrite_pluginfile_urls($this->localcourse->summary, 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
+            
             $content = \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
             $content.= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
             $content.= \html_writer::end_tag('div'); // .summary
+
+            // Display course registration links configured using enrol_harcourtsone instances
+            $enrolinstances = $this->get_local_course_enrolment_instances();
+            foreach ($enrolinstances as $instance) {
+                $content.= \html_writer::start_tag('div', array('class' => 'registration'));
+                $content.= \html_writer::link($instance->customtext4, $instance->customchar1, array('class' => 'btn btn-link', 'target' => '_blank'));
+                if (!$this->isenrolled) {
+                    $icon = !empty($instance->customtext3) ? '<i class="fa fa-'.$instance->customtext3.'" aria-hidden="true"></i>&nbsp;' : '';
+                    $content.= \html_writer::link($instance->customtext1, $icon.$instance->customtext2,
+                        array('class' => 'btn btn-primary', 'target' => '_blank'));
+                }
+                $content.= \html_writer::end_tag('div'); // .registration
+            }
+
             return $content;
         }
         return '';
@@ -154,6 +169,36 @@ class subcourse {
         }
 
         return 0;
+    }
+
+    /**
+     * Gets all instances of enrol_harcourtsone for the local course.
+     * 
+     * @return stdClass
+     */
+    private function get_local_course_enrolment_instances() {
+        global $DB, $USER;
+
+        if (!$this->islocal && !empty($this->localcourse)) {
+            throw new coding_exception('get_local_course_enrolment_instances() called on remote course.');
+        }
+
+        $sql = "SELECT 
+                    *
+                FROM
+                    {enrol} e
+                    JOIN 
+                    {user_info_data} uid
+                    ON e.customchar3 = uid.data
+                    JOIN {user_info_field} uif
+                    ON e.customchar2 = uif.shortname
+                WHERE
+                    enrol = 'harcourtsone'
+                    AND e.courseid = ?
+                    AND e.status = 0
+                    AND uid.userid = ?
+                    AND uif.id = uid.fieldid;";
+        return $DB->get_records_sql($sql, array($this->localcourse->id, $USER->id));
     }
     
     private function get_remote_course_progress () {
@@ -245,6 +290,7 @@ class subcourse {
             $content.= \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
             $content.= $summary;
             $content.= \html_writer::end_tag('div'); // .summary
+
         }
         return $content;
     }
