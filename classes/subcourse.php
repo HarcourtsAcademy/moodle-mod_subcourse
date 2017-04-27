@@ -310,7 +310,7 @@ class subcourse {
      * @return boolean
      */
     private function get_remote_course_is_enrolled() {
-        global $DB, $USER;
+        global $CFG, $DB, $USER;
 
         if (empty($this->remotecourse)) {
             return;
