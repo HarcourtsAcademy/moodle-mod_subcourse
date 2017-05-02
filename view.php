@@ -35,15 +35,24 @@ $cm = get_coursemodule_from_id('subcourse', $id, 0, false, MUST_EXIST);
 $subcourse = $DB->get_record('subcourse', array('id' => $cm->instance), '*', MUST_EXIST);
 
 if ($subcourse->refcourse < 0) {
+    global $USER;
+
     // The remote course id is negative, convert it back.
     $remotecourseid = -1 * $subcourse->refcourse;
     
     // Get the remote MNet course from the local DB table.
     $remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $remotecourseid), '*', MUST_EXIST);
     
-    // Redirect to the course on the remote MNet server.
-    redirect(new moodle_url('/auth/mnet/jump.php', array('hostid' => $remotecourse->hostid,
-        'wantsurl' => '/course/view.php?id='.$remotecourse->remoteid)));
+    if (!empty($remotecourse)) {
+        // Redirect to the course on the remote MNet server.
+        if (is_mnet_remote_user($USER)) {
+            $remotehost = $DB->get_record('mnet_host', array('id' => $remotecourse->hostid), '*', MUST_EXIST);
+            redirect(new moodle_url($remotehost->wwwroot.'/course/view.php?id='.$remotecourse->remoteid));
+        } else {
+            redirect(new moodle_url('/auth/mnet/jump.php', array('hostid' => $remotecourse->hostid,
+                'wantsurl' => '/course/view.php?id='.$remotecourse->remoteid)));
+        }
+    }
 }
 /* END Academy Patch M#052 */
 
