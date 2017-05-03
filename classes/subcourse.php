@@ -101,32 +101,13 @@ class subcourse {
      */
     private function get_local_course_summary() {
         if ($this->localcourse && $this->localcourse->summary) {
-            $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
-
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = file_rewrite_pluginfile_urls($this->localcourse->summary,
                 'pluginfile.php', $this->localcoursecontext->id, 'course', 'summary', null);
 
-            $content = \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
+            $content = \html_writer::start_tag('div', array('class' => 'summary'));
             $content .= format_text($summary, $this->localcourse->summaryformat, $options, $this->localcourse->id);
             $content .= \html_writer::end_tag('div');
-
-            // Display course registration links configured using enrol_harcourtsone instances.
-            $enrolinstances = $this->get_local_course_enrolment_instances();
-            foreach ($enrolinstances as $instance) {
-                $content .= \html_writer::start_tag('div', array('class' => 'registration'));
-                $content .= \html_writer::link($instance->customtext4, $instance->customchar1,
-                    array('class' => 'btn btn-link', 'target' => '_blank'));
-
-                if (!$this->isenrolled) {
-                    $icon = !empty($instance->customtext3) ? '<i class="fa fa-'.$instance->customtext3.'" aria-hidden="true">'.
-                        '</i>&nbsp;' : '';
-                    $content .= \html_writer::link($instance->customtext1, $icon.$instance->customtext2,
-                        array('class' => 'btn btn-primary', 'target' => '_blank'));
-                }
-
-                $content .= \html_writer::end_tag('div');
-            }
 
             return $content;
         }

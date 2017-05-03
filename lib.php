@@ -511,7 +511,8 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
 }
 
 /**
- * This will change the activity module icon to represent the grade percentage.
+ * This will change the activity module content to show information about the subcourse
+ * and the learner's progress in the subcourse.
  *
  * @param cm_info $cm
  * @return void
@@ -519,15 +520,24 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
 function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     global $DB;
     
-    $record = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, course, name, refcourse');
+    $record = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, course, name, refcourse, intro, introformat');
     $subcourse = new mod_subcourse\subcourse($record->id, $record->course, $record->name, $record->refcourse);
     
     if (empty($subcourse->refcourse)) {
         return null;
     }
+
+    $class = ($subcourse->isenrolled ? ' is-enrolled' : ' not-enrolled');
+    $content = \html_writer::start_tag('div', array('class' => 'subcourse-info' . $class));
+    $content.= $subcourse->get_progress_bar() .
+               $subcourse->get_content() . 
+               $subcourse->get_course_summary() . 
+               format_module_intro('subcourse', $record, $cm->id);
+    $content .= \html_writer::end_tag('div');
+
     
     // Set the course module content
-    $cm->set_content($subcourse->get_progress_bar() . $subcourse->get_content() . $subcourse->get_course_summary());
+    $cm->set_content($content);
     $cm->set_icon_url($subcourse->get_icon());
     
 }
