@@ -268,12 +268,10 @@ class subcourse {
         $content = '';
 
         if ($this->remotecourse->summary) {
-            $summaryclass = ($this->isenrolled ? ' is-enrolled' : ' not-enrolled');
-
             $options = array('filter' => false, 'overflowdiv' => true, 'noclean' => true, 'para' => false);
             $summary = format_text($this->remotecourse->summary, $this->remotecourse->summaryformat, $options);
 
-            $content .= \html_writer::start_tag('div', array('class' => 'summary' . $summaryclass));
+            $content .= \html_writer::start_tag('div', array('class' => 'summary'));
             $content .= $summary;
             $content .= \html_writer::end_tag('div');
 
