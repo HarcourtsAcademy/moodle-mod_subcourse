@@ -297,19 +297,12 @@ class subcourse {
 
         $service = \mnetservice_enrol::get_instance();
 
-        $lastfetchenrolments = get_config('mnetservice_enrol', 'lastfetchenrolments');
-        $usecache = true;
-        if (!$usecache or empty($lastfetchenrolments) or (time() - $lastfetchenrolments > 600)) {
-            /* fetch fresh data from remote if we just came from the course selection screen
-               or every 10 minutes. */
-            $usecache = false;
-            $result = $service->req_course_enrolments($this->remotecourse->hostid, $this->remotecourse->remoteid, $usecache);
+        $result = $service->req_course_enrolments($this->remotecourse->hostid, $this->remotecourse->remoteid);
 
-            if ($result !== true) {
-                require_once($CFG->dirroot.'/mnet/xmlrpc/serverlib.php');
-                throw new \moodle_exception($service->format_error_message($result), 'mnet');
-                return false;
-            }
+        if ($result !== true) {
+            require_once($CFG->dirroot.'/mnet/xmlrpc/serverlib.php');
+            throw new \moodle_exception($service->format_error_message($result), 'mnet');
+            return false;
         }
 
         // Get whether the current user is enrolled in the remote course.
