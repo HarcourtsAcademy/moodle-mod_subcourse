@@ -48,9 +48,8 @@ class restore_subcourse_activity_structure_step extends restore_activity_structu
 
         /* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses. */
         if (!$this->task->is_samesite()
-            or !$DB->record_exists('course', array('id' => $data->refcourse))
-            or ($data->refcourse < 0
-                and !$DB->record_exists('mnetservice_enrol_courses', array('id' => -1 * $data->refcourse)))) {
+            or ($data->refcourse > 0 and !$DB->record_exists('course', array('id' => $data->refcourse)))
+            or ($data->refcourse < 0 and !$DB->record_exists('mnetservice_enrol_courses', array('id' => -1 * $data->refcourse)))) {
                 $data->refcourse = 0;
         }
         /* END Academy Patch M#052 */
