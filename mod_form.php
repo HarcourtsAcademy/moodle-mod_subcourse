@@ -124,7 +124,7 @@ class mod_subcourse_mod_form extends moodleform_mod {
             
             foreach ($mycourses as $mycourse) {
                 if ($mycourse->id < 0) {
-                    $remotecourses[$mycourse->id] = $mycourse;
+                    $remotecourses[$mycourse->shortname][$mycourse->id] = $mycourse;
                     continue;
                 }
                 /* END Academy Patch M#052 */
@@ -145,9 +145,11 @@ class mod_subcourse_mod_form extends moodleform_mod {
             
             /* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses */
             if (!empty($remotecourses)) {
-                foreach ($remotecourses as $remotecourse) {
-                    $courselabel = $remotecourse->fullname.' ('.$remotecourse->shortname.')';
-                    $options['- MNet Remote Courses -'][$remotecourse->id] = $courselabel;
+                foreach ($remotecourses as $remotecoursehost) {
+                    foreach ($remotecoursehost as $remotecourse) {
+                        $courselabel = $remotecourse->fullname;
+                        $options['MNet Remote Courses on ' . $remotecourse->shortname][$remotecourse->id] = $courselabel;
+                    }
                 }
             }
             /* END Academy Patch M#052 */
