@@ -527,7 +527,13 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
         return null;
     }
 
-    $class = ($subcourse->isenrolled ? ' is-enrolled' : ' not-enrolled');
+    $class = '';
+    if ($subcourse->isenrolled) {
+        $class = ' is-enrolled';
+    } else {
+        $cm->set_no_view_link();
+        $class = ' not-enrolled';
+    }
     $content = \html_writer::start_tag('div', array('class' => 'subcourse-info' . $class));
     $content.= $subcourse->get_progress_bar() .
                $subcourse->get_content() . 
@@ -535,11 +541,9 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
                format_module_intro('subcourse', $record, $cm->id);
     $content .= \html_writer::end_tag('div');
 
-    
     // Set the course module content
     $cm->set_content($content);
     $cm->set_icon_url($subcourse->get_icon());
-    
 }
 /* END Academy Patch M#032 */
 
