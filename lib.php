@@ -332,13 +332,3 @@ function subcourse_get_completion_state($course, $cm, $userid, $type) {
     // Check if the referenced course is completed.
     $coursecompletion = new completion_completion(['userid' => $userid, 'course' => $subcourse->refcourse]);
 }
-
-/**
- * The list of fields to copy from remote grade_item
- * @return array
- */
-function subcourse_get_fetched_item_fields() {
-    /* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
-    return array('gradetype', 'grademax', 'grademin', 'gradepass', 'scaleid');
-    /* END Academy Patch M#032 */
-}
