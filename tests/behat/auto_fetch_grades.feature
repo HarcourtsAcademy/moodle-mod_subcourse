@@ -1,5 +1,5 @@
 @mod @mod_subcourse
-Feature:
+Feature: Grades are fetched automatically from the referenced course
   In order to see student's final course grade as a grade item in another course
   As a teacher
   I need to give the final grade in a referenced course and that's enough
@@ -33,9 +33,8 @@ Feature:
     # Set grades in the referenced course.
     #
     And I log in as "teacher1"
-    And I follow "SlaveCourse"
-    And I navigate to "Grades" node in "Course administration"
-    And I navigate to "Gradebook setup" node in "Grade administration > Setup"
+    And I am on "SlaveCourse" course homepage
+    And I navigate to "Setup > Gradebook setup" in the course gradebook
     And I click on "Edit" "link" in the "SlaveCourse" "table_row"
     And I click on "Edit settings" "link" in the "SlaveCourse" "table_row"
     And I set the following fields to these values:
@@ -47,7 +46,7 @@ Feature:
       | Item name     | Manual item 1   |
       | Maximum grade | 200             |
     And I press "Save changes"
-    And I navigate to "Grader report" node in "Grade administration"
+    And I navigate to "View > Grader report" in the course gradebook
     And I turn editing mode on
     And I give the grade "100" to the user "Student 1" for the grade item "Manual item 1"
     And I give the grade "50" to the user "Student 2" for the grade item "Manual item 1"
@@ -56,8 +55,7 @@ Feature:
     #
     # Create the subcourse instance.
     #
-    And I am on homepage
-    And I follow "MasterCourse"
+    And I am on "MasterCourse" course homepage
     And I turn editing mode on
     And I add a "Subcourse" to section "1" and I fill the form with:
       | Subcourse name                    | Unit course 1       |
@@ -75,7 +73,7 @@ Feature:
     # After fetching, the grades are copied.
     #
     And I press "See all course grades"
-    And I navigate to "User report" node in "Grade administration"
+    And I navigate to "View > User report" in the course gradebook
     And I set the field "Select all or one user" to "Student 1"
     And the following should exist in the "user-grade" table:
       | Grade item    | Grade | Range   |
@@ -83,19 +81,16 @@ Feature:
     #
     # Changing grades in the referenced course has instant effect.
     #
-    And I am on homepage
-    And I follow "SlaveCourse"
-    And I navigate to "Grades" node in "Course administration"
-    And I navigate to "Grader report" node in "Grade administration"
+    And I am on "SlaveCourse" course homepage
+    And I navigate to "View > Grader report" in the course gradebook
     And I turn editing mode on
     And I give the grade "150" to the user "Student 1" for the grade item "Manual item 1"
     And I press "Save changes"
     And I turn editing mode off
-    And I am on homepage
-    And I follow "MasterCourse"
-    And I navigate to "Grades" node in "Course administration"
+    And I am on "MasterCourse" course homepage
+    And I navigate to "View > Grader report" in the course gradebook
     And I should not see "Student 2"
-    And I navigate to "User report" node in "Grade administration"
+    And I navigate to "View > User report" in the course gradebook
     And I set the field "Select all or one user" to "Student 1"
     And the following should exist in the "user-grade" table:
       | Grade item    | Grade | Range   |
@@ -106,10 +101,8 @@ Feature:
     And the following "course enrolments" exist:
       | user          | course    | role              |
       | student2      | M         | student           |
-    And I am on homepage
-    And I follow "MasterCourse"
-    And I navigate to "Grades" node in "Course administration"
-    And I navigate to "User report" node in "Grade administration"
+    And I am on "MasterCourse" course homepage
+    And I navigate to "View > User report" in the course gradebook
     And I set the field "Select all or one user" to "Student 2"
     And the following should exist in the "user-grade" table:
       | Grade item    | Grade | Range   |

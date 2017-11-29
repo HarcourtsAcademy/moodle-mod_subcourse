@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Defines the list of the module's scheduled tasks.
+ *
  * @package     mod_subcourse
  * @category    task
  * @copyright   2014 David Mudrak <david@moodle.com>
@@ -25,12 +27,21 @@ defined('MOODLE_INTERNAL') || die();
 
 $tasks = array(
     array(
-        'classname' => 'mod_subcourse\task\fetch_grades',
+        'classname' => '\mod_subcourse\task\fetch_grades',
         'blocking' => 0,
-        'minute' => '57',
-        'hour' => '*',
+        'minute' => 'R',
+        'hour' => '3',
         'day' => '*',
         'dayofweek' => '1-5',
         'month' => '*'
-    )
+    ),
+    array(
+        'classname' => '\mod_subcourse\task\check_completed_refcourses',
+        'blocking' => 0,
+        'minute' => 'R',
+        'hour' => '4',
+        'day' => '*',
+        'dayofweek' => '1-5',
+        'month' => '*'
+    ),
 );

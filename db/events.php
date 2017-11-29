@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Defines the list of module's event observers.
+ *
  * @package    mod_subcourse
  * @copyright  2014 Vadim Dvorovenko (Vadimon@mail.ru)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -30,5 +32,9 @@ $observers = array(
     array(
         'eventname' => '\core\event\role_assigned',
         'callback'  => '\mod_subcourse\observers::role_assigned',
+    ),
+    array(
+        'eventname' => '\core\event\course_completed',
+        'callback' => '\mod_subcourse\observers::course_completed',
     ),
 );
