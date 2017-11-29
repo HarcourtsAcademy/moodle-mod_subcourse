@@ -59,6 +59,24 @@ function subcourse_available_courses($userid = null) {
         }
     }
 
+    /* START Academy Patch M#052 mod_subcourse can work with MNet remote courses the same as local courses */
+    // Get remote courses.
+    if (is_enabled_auth('mnet')) {
+        global $DB;
+        $remotecourses = $DB->get_records('mnetservice_enrol_courses', null, 'sortorder, shortname');
+        $remotehosts   = $DB->get_records('mnet_host');
+
+        // Remote courses will have -ve remoteid as key, so it can be differentiated from normal courses
+        foreach ($remotecourses as $id => $val) {
+            $remoteid           = $id * -1;
+            $val->id            = $remoteid;
+            $val->fullname      = $val->categoryname . ': ' . $val->fullname;
+            $val->shortname     = $remotehosts[$val->hostid]->name;
+            $courses[$remoteid] = $val;
+        }
+    }
+    /* END Academy Patch M#052 */
+
     return $courses;
 }
 
