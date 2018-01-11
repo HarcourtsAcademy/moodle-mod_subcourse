@@ -53,7 +53,9 @@ class subcourse {
             $this->refcourse = -1 * $refcourse;
 
             $this->islocal = false;
-            $this->remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $this->refcourse), '*', MUST_EXIST);
+            if ($this->refcourse) {
+                $this->remotecourse = $DB->get_record('mnetservice_enrol_courses', array('id' => $this->refcourse), '*', MUST_EXIST);
+            }
             $this->isenrolled = $this->get_remote_course_is_enrolled();
         }
 
