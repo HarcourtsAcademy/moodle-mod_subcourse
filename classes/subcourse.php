@@ -243,14 +243,13 @@ class subcourse {
         $progressbarclass = ($progress < 100 ? 'progress' : 'progress progress-success');
 
         if (!$this->isenrolled) {
-            $progressbarsection = \html_writer::div('Not registered', 'bar bar-empty', array('style' => "width: 100%;"));
+            $progressbarsection = \html_writer::div('Not registered', 'progress-bar progress-bar-empty', array('style' => "width: 100%;", 'role' => 'progressbar'));
         } else if (7 < $progress && $progress <= 100) {
-            $progressbarsection = \html_writer::div("$progress% Complete", 'bar', array('style' => "width: $progress%;"));
+            $progressbarsection = \html_writer::div("$progress% Complete", 'progress-bar', array('style' => "width: $progress%;"));
         } else if ($progress > 0) {
-            $progressbarsection = \html_writer::div('', 'bar', array('style' => "width: $progress%;"));
+            $progressbarsection = \html_writer::div('', 'progress-bar', array('style' => "width: $progress%;"));
         } else {
-            $progressbarclass .= ' progress-striped';
-            $progressbarsection = \html_writer::div('Ready to start', 'bar', array('style' => "width: 100%;"));
+            $progressbarsection = \html_writer::div('Ready to start', 'progress-bar progress-bar-striped', array('style' => "width: 100%;"));
         }
         $progressbar = \html_writer::start_div($progressbarclass, array('style' => 'margin-right: 2em;'));
         $progressbar .= $progressbarsection;

@@ -284,11 +284,13 @@ function mod_subcourse_cm_info_dynamic(cm_info $cm) {
     if ($subcourse->isenrolled) {
         $class = ' is-enrolled';
     } else {
+        /* START Academy Patch M#032
         $context = context_course::instance($record->course);
         $can_edit = has_capability('moodle/course:update', $context);
         if (!$can_edit) {
             $cm->set_no_view_link();
         }
+        * END Academy Patch M#032 */
         $class = ' not-enrolled';
     }
     $content = \html_writer::start_tag('div', array('class' => 'subcourse-info' . $class));
