@@ -57,6 +57,7 @@ $string['modulename_help'] = 'The module provides very simple yet useful functio
 $string['modulenameplural'] = 'Subcourses';
 $string['nocoursesavailable'] = 'No courses you could fetch grades from';
 $string['nosubcourses'] = 'There are no subcourses in this course';
+$string['notenrolled'] = '<b>You are not registered in this course.</b> Use the options below to register:'; // Added for Academy Patch M#032
 $string['pluginadministration'] = 'Subcourse administration';
 $string['pluginname'] = 'Subcourse';
 $string['privacy:metadata'] = 'Subcourse does not store any personal data';

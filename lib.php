@@ -24,6 +24,11 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+use mod_subcourse\subcourse;
+
+require_once($CFG->libdir.'/gradelib.php');
+require_once($CFG->dirroot.'/mnet/service/enrol/locallib.php'); // Academy Patch M#052
+
 /**
  * Returns the information if the module supports a feature
  *
@@ -271,6 +276,7 @@ function subcourse_scale_used_anywhere($scaleid) {
  * @param cm_info $cm
  * @return void
  */
+/* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress and enrolment status.
 function mod_subcourse_cm_info_view(cm_info $cm) {
     global $CFG, $USER, $DB;
 
@@ -322,6 +328,50 @@ function mod_subcourse_cm_info_view(cm_info $cm) {
         $cm->set_after_link($html);
     }
 }
+*/
+
+/**
+ * This will change the activity module content to show information about the subcourse
+ * and the learner's progress in the subcourse.
+ *
+ * @param cm_info $cm
+ * @return void
+ */
+function mod_subcourse_cm_info_dynamic(cm_info $cm) {
+    global $DB;
+
+    $record = $DB->get_record("subcourse", array("id" => $cm->instance), 'id, course, name, refcourse, intro, introformat');
+    $subcourse = new mod_subcourse\subcourse($record->id, $record->course, $record->name, $record->refcourse);
+
+    if (empty($subcourse->refcourse)) {
+        return null;
+    }
+
+    $class = '';
+    if ($subcourse->isenrolled) {
+        $class = ' is-enrolled';
+    } else {
+        /* START Academy Patch M#032
+        $context = context_course::instance($record->course);
+        $can_edit = has_capability('moodle/course:update', $context);
+        if (!$can_edit) {
+            $cm->set_no_view_link();
+        }
+        * END Academy Patch M#032 */
+        $class = ' not-enrolled';
+    }
+    $content = \html_writer::start_tag('div', array('class' => 'subcourse-info' . $class));
+    $content.= $subcourse->get_progress_bar() .
+        $subcourse->get_content() .
+        $subcourse->get_course_summary() .
+        format_module_intro('subcourse', $record, $cm->id);
+    $content .= \html_writer::end_tag('div');
+
+    // Set the course module content
+    $cm->set_content($content);
+    $cm->set_icon_url($subcourse->get_icon());
+}
+/* END Academy Patch M#032 */
 
 /**
  * Obtains the automatic completion state for this subcourse.

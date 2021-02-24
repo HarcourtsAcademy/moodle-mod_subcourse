@@ -306,7 +306,10 @@ function subcourse_update_timefetched($subcourseids, $time = null) {
  * @return array
  */
 function subcourse_get_fetched_item_fields() {
-    return array('gradetype', 'grademax', 'grademin', 'scaleid', 'hidden');
+    /* START Academy Patch M#032 mod_subcourse icon changes to show subcourse progress */
+    // return array('gradetype', 'grademax', 'grademin', 'scaleid', 'hidden');
+    return array('gradetype', 'grademax', 'grademin', 'gradepass', 'scaleid', 'hidden');
+    /* END Academy Patch M#032 */
 }
 
 /**
