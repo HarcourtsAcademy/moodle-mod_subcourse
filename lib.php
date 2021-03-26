@@ -333,4 +333,5 @@ function subcourse_get_completion_state($course, $cm, $userid, $type) {
 
     // Check if the referenced course is completed.
     $coursecompletion = new completion_completion(['userid' => $userid, 'course' => $subcourse->refcourse]);
+    return $coursecompletion->is_complete();
 }
